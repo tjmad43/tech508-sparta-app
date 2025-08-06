@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Update..."
-sudp DEBIAN_FRONTEND=noninteractiv apt-get update
+sudp DEBIAN_FRONTEND=noninteractive apt-get update
 echo "Done"
 echo
 
@@ -11,21 +11,32 @@ echo "Done"
 echo
 
 # import public key
-sudo apt-get install gnupg curl
+echo "Import public key..."
+sudo DEBIAN_FRONTEND=noninteractive apt-get install gnupg curl
 
+echo "Import public key..."
 curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-   sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg \
-   --dearmor
+   gpg --dearmor | \
+   sudo tee /usr/share/keyrings/mongodb-server-7.0.gpg > /dev/null
+echo "Done"
+echo
+
 
 # create list file
+echo "Create list file..."
 echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+echo "Done"
+echo
 
 # reload package database
-sudo apt-get update
+echo "Reload package database..."
+sudo DEBIAN_FRONTEND=noninteractive apt-get update
+echo "Done"
+echo
 
 # install mongo db
-# fix! needs input
-sudo apt-get install -y \
+echo "Install mongodb..."
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
    mongodb-org=7.0.22 \
    mongodb-org-database=7.0.22 \
    mongodb-org-server=7.0.22 \
@@ -34,18 +45,26 @@ sudo apt-get install -y \
    mongodb-org-mongos=7.0.22 \
    mongodb-org-tools=7.0.22 \
    mongodb-org-database-tools-extra=7.0.22
+echo "Done"
+echo
 
 
-# change   bindIp: 127.0.0.1 to 0.0.0.0 in
-#cd /etc
-#sudo cp mongod.conf mongod.conf.bk
-#sudo nano mongod.conf
-# use sed
+# change bindIp to allow anywhere
+echo "Change bindIp..."
+sudo sed -i 's/bindIp: 127.0.0.1/bindIp: 0.0.0.0/' /etc/mongod.conf
+echo "Done"
+echo
 
-
+echo "Start db..."
 sudo systemctl start mongod
+echo "Done"
+echo
 
+echo "db status..."
 sudo systemctl status mongod
+echo
 
+echo "Enable mongodb..."
 sudo systemctl enable mongod
-
+echo "Done"
+echo
